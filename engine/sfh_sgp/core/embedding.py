@@ -5,14 +5,25 @@ from .guard import FROZEN_HASH, FROZEN_ARCH, ArchitectureGuard
 
 def m1_signed_ordinal_flow(x: np.ndarray) -> float:
     diffs = np.diff(x)
-    return (np.sum(diffs > 0) - np.sum(diffs < 0)) / max(len(diffs), 1)
+    n = max(len(diffs), 1)
+    return float((np.sum(diffs > 0) - np.sum(diffs < 0)) / n)
 
 
 def m2_half_correlation(x: np.ndarray) -> float:
     mid = len(x) // 2
     if mid < 2:
         return 0.0
-    return float(np.corrcoef(x[:mid], x[mid:2 * mid])[0, 1])
+    a, b = x[:mid], x[mid:2 * mid]
+    a_mean = np.mean(a)
+    b_mean = np.mean(b)
+    a_centered = a - a_mean
+    b_centered = b - b_mean
+    denom = np.sqrt(np.sum(a_centered ** 2) * np.sum(b_centered ** 2))
+    if denom < 1e-12:
+        return 0.0
+    val = np.sum(a_centered * b_centered) / denom
+    val = max(-1.0, min(1.0, val))
+    return 0.0 if np.isnan(val) else float(val)
 
 
 def m3_signed_compressibility(x: np.ndarray) -> float:
